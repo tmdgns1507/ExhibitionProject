@@ -12,12 +12,15 @@ namespace WarGame
         }
 
         public void OperateUpdate(PlayerController controller)
-        {
-
+        {   
+            if (controller.IsGrounded && controller.IsMoving)
+            {
+                controller.ChangeState(PlayerController.PlayerState.Move);
+            }
         }
         public void OperateFixedUpdate(PlayerController controller)
         {
-
+            if (!controller.IsGrounded) controller.ApplyGravity();
         }
 
         public void OperateExit(PlayerController controller)

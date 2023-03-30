@@ -4,8 +4,7 @@ using UnityEngine;
 using UnityEngine.Events;
 
 namespace WarGame
-{
-    [ExecuteInEditMode]
+{   
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(CapsuleCollider))]
     public class PlayerController : MonoBehaviour
@@ -83,11 +82,12 @@ namespace WarGame
         StateMachine<PlayerController> playerSM;
         Dictionary<PlayerState, IState<PlayerController>> playerStates 
             = new Dictionary<PlayerState, IState<PlayerController>>();
-
+        
+        bool isMove = false;
         bool isFreeze = false;
-        bool isRunning;
+        bool isRunning = false;
         bool isOldGrounded = false;
-        bool isCrouching;
+        bool isCrouching = false;
 
         public enum PlayerState
         {
@@ -131,6 +131,19 @@ namespace WarGame
 
         public bool IsGrounded { get { return controller.isGrounded; } }
 
+        public bool IsMoving
+        {
+            get
+            {
+                if (PlayerVelocity.x != 0f || PlayerVelocity.z != 0f)
+                    isMove = true;
+                else
+                    isMove = false;
+
+                return isMove;
+            }
+        }
+        
         public float DefaultHandsHeadbobWeight { get { return defaultHandsHeadbobWeight; } }
 
         public PlayerDamageHandler DamageHandler
@@ -178,16 +191,20 @@ namespace WarGame
         private void Awake()
         {
             GetComponents();
+            
         }
 
         void Start()
         {
-            mouseControl.Init(transform, controlCamera);
+            SetPlayerStates();
+            InitPlayerStateMachine();
+            mouseControl.Init(transform, controlCamera);            
             InitHeadBobSystem();            
         }
 
         void Update()
         {
+            playerSM.OperateUpdate();
             LockMouseCursor();
         }
 
@@ -195,14 +212,13 @@ namespace WarGame
         {
             mouseControl.LookRotation(Time.fixedDeltaTime);
 
-            if (controller.isGrounded)
-            {
-                Move();
-            }
-            else
-            {
-                ApplyGravity();
-            }                      
+            playerSM.OperateFixedUpdate();
+            //if (controller.isGrounded)
+            //{
+            //    Move();
+            //}
+
+            // if (!controller.isGrounded) ApplyGravity();
 
             JumpFallControl();
             JumpEndControl();
@@ -277,6 +293,8 @@ namespace WarGame
             }
         }
 
+
+
         public void Freeze(bool value)
         {
             if (!value && !damageHandler.Health.RealIsAlive)
@@ -293,7 +311,7 @@ namespace WarGame
             cameraNoise.enabled = isEnabled;
         }
 
-        void Move()
+        public void Move()
         {
             float h = Input.GetAxis(StrafeAxisParam);
             float v = Input.GetAxis(ForwardAxisParam);
@@ -455,7 +473,7 @@ namespace WarGame
             mouseControl.SensivityMultiplier = multiplier;
         }
 
-        void ApplyGravity()
+        public void ApplyGravity()
         {
             playerVelocity += Vector3.down * gravity * Time.fixedDeltaTime;
             controller.Move(playerVelocity * Time.fixedDeltaTime);

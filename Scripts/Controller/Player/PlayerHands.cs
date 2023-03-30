@@ -88,7 +88,7 @@ namespace WarGame
         {
             get
             {
-                return (PistolHands.IsAiming && PistolHands.CentralAim) || (ShotgunHands.IsAiming && ShotgunHands.CentralAim) || (RifleHands.IsAiming && RifleHands.CentralAim);
+                return (PistolHands.IsAiming && PistolHands.isCentralAim) || (ShotgunHands.IsAiming && ShotgunHands.isCentralAim) || (RifleHands.IsAiming && RifleHands.isCentralAim);
             }
         }
 
@@ -383,10 +383,10 @@ namespace WarGame
 
         void ApplyRifleMods()
         {
-            RifleHands.Silence = false;
-            RifleHands.CentralAim = false;
-            RifleHands.LowPoseInAiming = false;
-            RifleHands.TopPoseInAiming = false;
+            RifleHands.isSilence = false;
+            RifleHands.isCentralAim = false;
+            RifleHands.isLowPoseInAiming = false;
+            RifleHands.isTopPoseInAiming = false;
             RifleHands.SetAiming(true, false, false, false);
             foreach (Modificator m in customization.AttachedModificators)
             {
@@ -426,7 +426,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        RifleHands.Silence = true;
+                        RifleHands.isSilence = true;
                         break;
                     }
                 }
@@ -436,18 +436,18 @@ namespace WarGame
 
         void ApplyShotgunMods()
         {
-            ShotgunHands.CentralAim = false;
-            ShotgunHands.LowPoseInAiming = false;
-            ShotgunHands.Silence = false;
-            ShotgunHands.Flashlight = false;
-            ShotgunHands.AddAmmo = false;
+            ShotgunHands.isCentralAim = false;
+            ShotgunHands.isLowPoseInAiming = false;
+            ShotgunHands.isSilence = false;
+            ShotgunHands.isFlashlight = false;
+            ShotgunHands.isAddAmmo = false;
             foreach (Modificator m in customization.AttachedModificators)
             {
                 foreach (int mId in SGModificatorsIdsForCentrailAim)
                 {
                     if (m.ModId == mId)
                     {
-                        ShotgunHands.CentralAim = true;
+                        ShotgunHands.isCentralAim = true;
                         break;
                     }
                 }
@@ -455,7 +455,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        ShotgunHands.LowPoseInAiming = true;
+                        ShotgunHands.isLowPoseInAiming = true;
                         break;
                     }
                 }
@@ -463,7 +463,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        ShotgunHands.Silence = true;
+                        ShotgunHands.isSilence = true;
                         break;
                     }
                 }
@@ -471,7 +471,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        ShotgunHands.Flashlight = true;
+                        ShotgunHands.isFlashlight = true;
                         ShotgunHands.PutFlashLight((m.CustomData as GameObject));
                         break;
                     }
@@ -480,13 +480,13 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        ShotgunHands.AddAmmo = true;
+                        ShotgunHands.isAddAmmo = true;
                         break;
                     }
                 }
             }
 
-            ShotgunHands.AmmoMax = ShotgunHands.AddAmmo ? ShotgunHands.AmmoMaxAdd : ShotgunHands.AmmoMaxDefault;
+            ShotgunHands.AmmoMax = ShotgunHands.isAddAmmo ? ShotgunHands.AmmoMaxAdd : ShotgunHands.AmmoMaxDefault;
             int ammoToCapacity = ShotgunHands.AmmoCurrent - ShotgunHands.AmmoMax;
             ammoToCapacity = Mathf.Clamp(ammoToCapacity, 0, ShotgunHands.AmmoMax);
 
@@ -502,19 +502,19 @@ namespace WarGame
         
         void ApplyPistolMods()
         {
-            PistolHands.CentralAim = false;
-            PistolHands.LowPoseInAiming = false;
-            PistolHands.LongReload = false;
-            PistolHands.Silence = false;
-            PistolHands.Flashlight = false;
-            PistolHands.BackReload = false;
+            PistolHands.isCentralAim = false;
+            PistolHands.isLowPoseInAiming = false;
+            PistolHands.isLongReload = false;
+            PistolHands.isSilence = false;
+            PistolHands.isFlashlight = false;
+            PistolHands.isBackReload = false;
             foreach (Modificator m in customization.AttachedModificators)
             {
                 foreach (int mId in ModificatorsIdsForCentrailAim)
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.CentralAim = true;
+                        PistolHands.isCentralAim = true;
                         break;
                     }
                 }
@@ -522,7 +522,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.LowPoseInAiming = true;
+                        PistolHands.isLowPoseInAiming = true;
                         break;
                     }
                 }
@@ -530,7 +530,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.LongReload = true;
+                        PistolHands.isLongReload = true;
                         break;
                     }
                 }
@@ -538,7 +538,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.Silence = true;
+                        PistolHands.isSilence = true;
                         break;
                     }
                 }
@@ -546,7 +546,7 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.BackReload = true;
+                        PistolHands.isBackReload = true;
                         break;
                     }
                 }
@@ -554,14 +554,14 @@ namespace WarGame
                 {
                     if (m.ModId == mId)
                     {
-                        PistolHands.Flashlight = true;
+                        PistolHands.isFlashlight = true;
                         PistolHands.PutFlashLight((m.CustomData as GameObject));
                         break;
                     }
                 }
             }
 
-            PistolHands.AmmoMax = PistolHands.LongReload ? PistolHands.AmmoMaxLong : PistolHands.AmmoMaxDefault;
+            PistolHands.AmmoMax = PistolHands.isLongReload ? PistolHands.AmmoMaxLong : PistolHands.AmmoMaxDefault;
 
             int ammoDelta = PistolHands.AmmoCurrent - PistolHands.AmmoMax;
 
@@ -575,7 +575,7 @@ namespace WarGame
             {
                 bool nowIsCentralController = animator.runtimeAnimatorController == PistolHands.ControllerCentral;
 
-                if (PistolHands.CentralAim != nowIsCentralController)
+                if (PistolHands.isCentralAim != nowIsCentralController)
                 {
                     if (PistolHands.AmmoCurrent == 0)
                     {
@@ -589,7 +589,7 @@ namespace WarGame
                     if (PistolHands.IsDeployed)
                     {
                         AnimatorStateInfo state = animator.GetCurrentAnimatorStateInfo(0);
-                        animator.runtimeAnimatorController = PistolHands.CentralAim ? PistolHands.ControllerCentral : PistolHands.ControllerDefault;
+                        animator.runtimeAnimatorController = PistolHands.isCentralAim ? PistolHands.ControllerCentral : PistolHands.ControllerDefault;
 
                         animator.Play(PistolHands.UpgradeIdleAnim, 0, state.normalizedTime);
                     }

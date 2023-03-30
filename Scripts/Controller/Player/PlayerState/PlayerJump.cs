@@ -17,7 +17,7 @@ namespace WarGame
         }
         public void OperateFixedUpdate(PlayerController controller)
         {
-
+            if (!controller.IsGrounded) controller.ApplyGravity();
         }
 
         public void OperateExit(PlayerController controller)
