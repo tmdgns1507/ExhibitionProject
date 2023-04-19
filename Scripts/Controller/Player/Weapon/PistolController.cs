@@ -788,19 +788,19 @@ namespace WarGame
         {
             Ray r = new Ray(FirePoint.position, FirePoint.forward);
             RaycastHit hitInfo;
-
+            
             if (Physics.Raycast(r, out hitInfo, 1000f, FireCollisionLayer, QueryTriggerInteraction.Ignore))
             {
                 IHittableObject hittable = hitInfo.collider.GetComponent<IHittableObject>();
-
+                
                 if (hittable == null)
                 {
                     hitInfo.collider.GetComponentInParent<IHittableObject>();
                 }
 
                 DecalOnHit dOnHit = hitInfo.collider.GetComponent<DecalOnHit>();
-
-                if (dOnHit == null)
+                
+                if (dOnHit == null && !controller.IsHumanoidTarget(hitInfo.collider.gameObject))
                 {
                     GameObject decal = SpawnHitDecal();
                     decal.SetActive(true);
@@ -831,7 +831,7 @@ namespace WarGame
         void InstantiateGunShot()
         {
             GameObject gunshotPrefab = isSilence ? gunshotSilencer : gunshot;
-
+            
             GameObject instance = GameObject.Instantiate(gunshotPrefab, gunshotPrefab.transform.position, gunshotPrefab.transform.rotation, gunshotPrefab.transform.parent);
             instance.SetActive(true);
 

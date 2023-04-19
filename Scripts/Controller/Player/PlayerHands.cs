@@ -314,19 +314,19 @@ namespace WarGame
             return null;
         }
 
-        protected virtual void StartJump()
+        public virtual void StartJump()
         {
             if(controller.DamageHandler.Health.RealIsAlive)
                 animator.Play(JumpAnimParam, 3, 0);
         }
 
-        protected virtual void EndJump()
+        public virtual void EndJump()
         {
             if(controller.DamageHandler.Health.RealIsAlive)
                 animator.Play(LandAnimParam, 3, 0);
         }
 
-        protected virtual void Crouch()
+        public virtual void Crouch()
         {
             if (controller.DamageHandler.Health.RealIsAlive)
             {
@@ -334,7 +334,7 @@ namespace WarGame
             }
         }
 
-        protected virtual void Standup()
+        public virtual void Standup()
         {
             if (controller.DamageHandler.Health.RealIsAlive)
             {

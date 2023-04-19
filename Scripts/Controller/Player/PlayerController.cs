@@ -4,7 +4,8 @@ using UnityEngine;
 using UnityEngine.Events;
 
 namespace WarGame
-{   
+{
+    [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(CapsuleCollider))]
     public class PlayerController : MonoBehaviour
@@ -21,7 +22,7 @@ namespace WarGame
 
         [Header("Helper")]
         public MouseControl mouseControl;
-        public HeadBob headBob;        
+        public HeadBob headBob;
         public LayerMask groundLayer;
         public MeshRenderer nearBlurSphere;
 
@@ -48,19 +49,19 @@ namespace WarGame
         float gravity = 9.81f;
         float stickToGround = 9.81f;
 
-        [Header("Others")]        
-        public Transform directionRefence;        
+        [Header("Others")]
+        public Transform directionRefence;
         public Camera playerCamera;
         public Transform controlCamera;
         public Transform handsHeadBobTarget;
         public TransformNoise cameraNoise;
-        
+
         float idleNoise = 0.5f;
         float runNoise = 4f;
         float cameraHeadbobWeight = 1f;
         float handsHeadbobWeight = 0.3f;
         [HideInInspector] public float handsHeadbobMultiplier = 1f;
-        Vector3 playerVelocity = Vector3.zero;
+        [HideInInspector] public Vector3 playerVelocity = Vector3.zero;
         Vector3 oldPlayerVelocity = Vector3.zero;
         Vector3 oldPosition;
         Vector3 oldHandHeadBobPos;
@@ -79,24 +80,24 @@ namespace WarGame
         PlayerDamageHandler damageHandler;
 
         //FSM
-        StateMachine<PlayerController> playerSM;
-        Dictionary<PlayerState, IState<PlayerController>> playerStates 
-            = new Dictionary<PlayerState, IState<PlayerController>>();
-        
+        //StateMachine<PlayerController> playerSM;
+        //Dictionary<PlayerState, IState<PlayerController>> playerStates
+        //    = new Dictionary<PlayerState, IState<PlayerController>>();
+
         bool isMove = false;
         bool isFreeze = false;
         bool isRunning = false;
         bool isOldGrounded = false;
         bool isCrouching = false;
 
-        public enum PlayerState
-        {
-            Idle, 
-            Move, 
-            Crouch, 
-            Jump
-        }
-        
+        //public enum PlayerState
+        //{
+        //    Idle,
+        //    Move,
+        //    Crouch,
+        //    Jump
+        //}
+
         #endregion
 
         #region Params
@@ -105,11 +106,11 @@ namespace WarGame
         string StrafeAxisParam = "Horizontal";
         string HandsParam = "Hands";
         string NeckParam = "Neck";
-        
+
         #endregion
 
         #region Events
-                
+
         [HideInInspector] public UnityAction RunStartEvent;
         [HideInInspector] public UnityAction JumpStartEvent;
         [HideInInspector] public UnityAction JumpFallEvent;
@@ -122,12 +123,16 @@ namespace WarGame
         #region Properties
 
         public Vector3 PlayerVelocity { get { return controller.velocity; } }
-
+                
         public bool IsFreezed { get { return isFreeze; } }
 
         public bool IsRunning { get { return isRunning; } }
 
+        public bool IsJumpKey { get { if (Input.GetKey(KeyCode.Space)) return true; else return false; } }
+
         public bool IsCrouching { get { return isCrouching; } }
+
+        public bool IsCrouchKey { get { if (Input.GetKey(KeyCode.LeftControl)) return true; else return false; } }
 
         public bool IsGrounded { get { return controller.isGrounded; } }
 
@@ -143,7 +148,7 @@ namespace WarGame
                 return isMove;
             }
         }
-        
+
         public float DefaultHandsHeadbobWeight { get { return defaultHandsHeadbobWeight; } }
 
         public PlayerDamageHandler DamageHandler
@@ -160,51 +165,51 @@ namespace WarGame
         #endregion
 
         #region FSM
-        void SetPlayerStates()
-        {
-            IState<PlayerController> idle = new PlayerIdle();
-            IState<PlayerController> move = new PlayerMove();
-            IState<PlayerController> crouch = new PlayerCrouch();
-            IState<PlayerController> jump = new PlayerJump();
+        //void SetPlayerStates()
+        //{
+        //    IState<PlayerController> idle = new PlayerIdle();
+        //    IState<PlayerController> move = new PlayerMove();
+        //    IState<PlayerController> crouch = new PlayerCrouch();
+        //    IState<PlayerController> jump = new PlayerJump();
 
-            playerStates.Add(PlayerState.Idle, idle);
-            playerStates.Add(PlayerState.Move, move);
-            playerStates.Add(PlayerState.Crouch, crouch);
-            playerStates.Add(PlayerState.Jump, jump);
-        }
+        //    playerStates.Add(PlayerState.Idle, idle);
+        //    playerStates.Add(PlayerState.Move, move);
+        //    playerStates.Add(PlayerState.Crouch, crouch);
+        //    playerStates.Add(PlayerState.Jump, jump);
+        //}
 
-        void InitPlayerStateMachine()
-        {
-            if (playerSM == null)
-            {
-                playerSM = new StateMachine<PlayerController>(this, playerStates[PlayerState.Idle]);
-            }
-        }
+        //void InitPlayerStateMachine()
+        //{
+        //    if (playerSM == null)
+        //    {
+        //        playerSM = new StateMachine<PlayerController>(this, playerStates[PlayerState.Idle]);
+        //    }
+        //}
 
-        public void ChangeState(PlayerState state)
-        {
-            playerSM.SetState(playerStates[state]);
-        }
+        //public void ChangeState(PlayerState state)
+        //{
+        //    playerSM.SetState(playerStates[state]);
+        //}
 
         #endregion
 
         private void Awake()
         {
             GetComponents();
-            
+
         }
 
         void Start()
         {
-            SetPlayerStates();
-            InitPlayerStateMachine();
-            mouseControl.Init(transform, controlCamera);            
-            InitHeadBobSystem();            
+            //SetPlayerStates();
+            //InitPlayerStateMachine();
+            mouseControl.Init(transform, controlCamera);
+            InitHeadBobSystem();
         }
 
         void Update()
         {
-            playerSM.OperateUpdate();
+            //playerSM.OperateUpdate();
             LockMouseCursor();
         }
 
@@ -212,13 +217,13 @@ namespace WarGame
         {
             mouseControl.LookRotation(Time.fixedDeltaTime);
 
-            playerSM.OperateFixedUpdate();
-            //if (controller.isGrounded)
-            //{
-            //    Move();
-            //}
+            //playerSM.OperateFixedUpdate();
+            if (controller.isGrounded)
+            {
+                Move();
+            }
 
-            // if (!controller.isGrounded) ApplyGravity();
+            if (!controller.isGrounded) ApplyGravity();
 
             JumpFallControl();
             JumpEndControl();
@@ -311,7 +316,7 @@ namespace WarGame
             cameraNoise.enabled = isEnabled;
         }
 
-        public void Move()
+        void Move()
         {
             float h = Input.GetAxis(StrafeAxisParam);
             float v = Input.GetAxis(ForwardAxisParam);
@@ -325,15 +330,10 @@ namespace WarGame
             headBob.CalcHeadbob(Time.time);
 
             handsHeadBobTarget.localPosition -= oldHandHeadBobPos;
-
-            // you can do any HandsHeadBobTarget position set
-
             handsHeadBobTarget.localPosition += headBob.HeadBobPos * handsHeadbobWeight * handsHeadbobMultiplier;
 
             controlCamera.localPosition -= oldCameraHeadBobPos;
-
             controlCamera.localPosition = controlCameraPosition;
-            // you can do any ControlCamera position set
 
             controlCamera.localPosition += headBob.HeadBobPos * cameraHeadbobWeight;
 
@@ -346,16 +346,8 @@ namespace WarGame
             float speed = this.speed;
             if (Input.GetKey(KeyCode.LeftShift) && !Input.GetMouseButton(1) && !Input.GetMouseButton(0) && playerXZVelocity.magnitude >= runSpeedThreshold && !isCrouching)
             {
-                //speed *= RunSpeedMultiplier;
                 runTime += Time.fixedDeltaTime;
-                if (!isRunning)
-                {
-                    isRunning = true;
-                    if (RunStartEvent != null)
-                    {
-                        RunStartEvent();
-                    }
-                }
+                Run();
 
                 if (!Hands.IsAiming)
                     cameraNoise.NoiseAmount = Mathf.MoveTowards(cameraNoise.NoiseAmount, runNoise, Time.fixedDeltaTime * 5f);
@@ -371,37 +363,17 @@ namespace WarGame
 
             if (Input.GetKeyDown(KeyCode.LeftControl) && !isFreeze)
             {
-                isCrouching = true;
-
-                if (CrouchEvent != null)
-                {
-                    CrouchEvent();
-                }
+                Crouch();
             }
 
-            if (isCrouching)
+            if ((Input.GetKeyUp(KeyCode.LeftControl) && !isFreeze)
+                || (Input.GetKey(KeyCode.LeftControl) && isFreeze && isCrouching))
             {
-
+                StandUp();
             }
 
-            if ((Input.GetKeyUp(KeyCode.LeftControl) && !isFreeze) || (Input.GetKey(KeyCode.LeftControl) && isFreeze && isCrouching))
-            {
-                isCrouching = false;
-
-                if (damageHandler.Health.RealIsAlive)
-                {
-                    if (StandUpEvent != null)
-                    {
-                        StandUpEvent();
-                    }
-                }
-
-            }
-
-            standStateChange();
-
+            ChangeStandState();
             runTime = Mathf.Clamp(runTime, 0, runIncreaseSpeedTime);
-
             float runTimeFraction = runTime / runIncreaseSpeedTime;
             Hands.SetRun(runTimeFraction);
             float runMultiplier = Mathf.Lerp(1, runSpeedMultiplier, RunIncreaseSpeedCurve.Evaluate(runTimeFraction));
@@ -430,15 +402,55 @@ namespace WarGame
             {
                 if (Input.GetKey(KeyCode.Space) && !isCrouching && !isFreeze)
                 {
-                    playerVelocity.y = jumpSpeed;
-                    if (JumpStartEvent != null)
-                        JumpStartEvent();
+                    Jump();
                 }
                 controller.Move(playerVelocity * Time.fixedDeltaTime);
             }
         }
 
-        void standStateChange()
+        void Run()
+        {
+            if (!isRunning)
+            {
+                isRunning = true;
+                if (RunStartEvent != null)
+                {
+                    RunStartEvent();
+                }
+            }
+        }
+
+        void Jump()
+        {
+            playerVelocity.y = jumpSpeed;
+            if (JumpStartEvent != null)
+                JumpStartEvent();
+        }
+
+        void Crouch()
+        {
+            isCrouching = true;
+
+            if (CrouchEvent != null)
+            {
+                CrouchEvent();
+            }
+        }
+
+        void StandUp()
+        {
+            isCrouching = false;
+
+            if (damageHandler.Health.RealIsAlive)
+            {
+                if (StandUpEvent != null)
+                {
+                    StandUpEvent();
+                }
+            }
+        }
+
+        void ChangeStandState()
         {
             standStateBlend = Mathf.MoveTowards(standStateBlend, isCrouching ? 1f : 0f, Time.deltaTime * stateChangeSpeed);
 
@@ -477,6 +489,11 @@ namespace WarGame
         {
             playerVelocity += Vector3.down * gravity * Time.fixedDeltaTime;
             controller.Move(playerVelocity * Time.fixedDeltaTime);
+        }               
+
+        public bool IsHumanoidTarget(GameObject target)
+        {
+            return target.CompareTag("Player") || target.CompareTag("Enemy") || target.CompareTag("Ally");
         }
 
         [System.Serializable]

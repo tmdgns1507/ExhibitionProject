@@ -14,6 +14,10 @@ public abstract class BaseHittableObject : MonoBehaviour, IHittableObject
         {
             return health;
         }
+        set
+        {
+            health = value;
+        }
     }
 
     public float StartHealth
@@ -21,6 +25,10 @@ public abstract class BaseHittableObject : MonoBehaviour, IHittableObject
         get
         {
             return startHealth;
+        }
+        set
+        {
+            startHealth = value;
         }
     }
 
@@ -86,7 +94,7 @@ public abstract class BaseHittableObject : MonoBehaviour, IHittableObject
                 DamagedEvent.Invoke(damage);
             }
         }
-    }
+    }        
 
     protected virtual void SetHealth(float health, float startHealth)
     {
@@ -129,7 +137,7 @@ public class DamageEvent : UnityEvent<DamageData>
 
 public struct DamageData
 {
-    public float DamageAmount;
+    public float DamageAmount;    
     public Vector3 HitPosition;
     public Vector3 HitDirection;
     public bool Deadly;

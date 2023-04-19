@@ -66,8 +66,8 @@ namespace WarGame
 
         #region Variables
         [Header("Ammo")]
-        public int AmmoCurrent = 20;
-        public int AmmoMax = 20;
+        public int AmmoCurrent = 40;
+        public int AmmoMax = 40;
         public int AmmoCapacity { get { return ammoItem.GetCurrentCount(); } }
 
         [Header("Options")]
@@ -1103,7 +1103,7 @@ namespace WarGame
 
                 DecalOnHit dOnHit = hitInfo.collider.GetComponent<DecalOnHit>();
 
-                if (dOnHit == null)
+                if (dOnHit == null && !Controller.IsHumanoidTarget(hitInfo.collider.gameObject))
                 {
                     GameObject decal = SpawnHitDecal();
                     decal.SetActive(true);
@@ -1410,7 +1410,7 @@ namespace WarGame
     {
         public RifleAmmoItem(string itemName) : base(itemName)
         {
-            MaxCapacity = 120;
+            MaxCapacity = 240;
             IconName = "RifleAmmo";
         }
     }

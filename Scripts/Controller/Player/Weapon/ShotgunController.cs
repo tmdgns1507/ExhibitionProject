@@ -737,7 +737,7 @@ namespace WarGame
 
                     DecalOnHit dOnHit = hitInfo.collider.GetComponent<DecalOnHit>();
 
-                    if (dOnHit == null)
+                    if (dOnHit == null && !controller.IsHumanoidTarget(hitInfo.collider.gameObject))
                     {
                         GameObject decal = SpawnHitDecal();
                         decal.SetActive(true);
