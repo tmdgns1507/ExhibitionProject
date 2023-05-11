@@ -28,8 +28,8 @@ namespace WarGame
         public float LowPoseWeightTarget = 0.09f;
         public float LowPoseWeightBlendSpeed = 0.2f;
         public LayerMask FireCollisionLayer;
-        public Transform FirePoint;
-        public GameObject GunHitDecalPrefab;
+        public Transform FirePoint;        
+        public GameObject GunHitDecalPrefab;    // need to delete
         public LerpToRoot HandsLerp;
         public AnimationCurve RecoilCurve;
         public Vector2 RecoilAmountMin = new Vector2(0.3f, 1f);
@@ -91,6 +91,7 @@ namespace WarGame
         float recoilTime = 0;
         Vector2 currentRecoil = new Vector2();
 
+        DataForPool poolData = default;
         TransformStateSetupper propsTransformState;
         Queue<GameObject> gunHitDecalPool = new Queue<GameObject>();
         Light flashlightLight;
@@ -381,6 +382,7 @@ namespace WarGame
 
                 gunHitDecalPool.Enqueue(instance);
             }
+            //PoolManager.Instance.PoolInstaller(HitEffect.Prefab, 100, "HitEffects");
         }
 
         public virtual GameObject SpawnHitDecal()
@@ -394,6 +396,17 @@ namespace WarGame
             }
 
             return gunHitDecalPool.Dequeue();
+            //GameObject hitEffect = HitEffect.Prefab;
+            //if(PoolManager.AllPools.ContainsKey("HitEffects"))
+            //{
+            //    hitEffect = PoolManager.AllPools["HitEffects"].GetFromPool();                
+            //}
+            //else
+            //{
+            //    PoolManager.Instance.PoolInstaller(HitEffect.Prefab, 1, "HitEffects");
+            //}
+
+            //return hitEffect;
         }
 
         public void SetCameraFov(float fov)

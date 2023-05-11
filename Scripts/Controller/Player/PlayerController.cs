@@ -79,25 +79,12 @@ namespace WarGame
         CharacterController controller;
         PlayerDamageHandler damageHandler;
 
-        //FSM
-        //StateMachine<PlayerController> playerSM;
-        //Dictionary<PlayerState, IState<PlayerController>> playerStates
-        //    = new Dictionary<PlayerState, IState<PlayerController>>();
-
         bool isMove = false;
         bool isFreeze = false;
         bool isRunning = false;
         bool isOldGrounded = false;
         bool isCrouching = false;
-
-        //public enum PlayerState
-        //{
-        //    Idle,
-        //    Move,
-        //    Crouch,
-        //    Jump
-        //}
-
+              
         #endregion
 
         #region Params
@@ -106,6 +93,9 @@ namespace WarGame
         string StrafeAxisParam = "Horizontal";
         string HandsParam = "Hands";
         string NeckParam = "Neck";
+        string Player = "Player";
+        string USSoldier = "USSoldier";
+        string RUSoldier = "RUSoldier";
 
         #endregion
 
@@ -164,52 +154,19 @@ namespace WarGame
 
         #endregion
 
-        #region FSM
-        //void SetPlayerStates()
-        //{
-        //    IState<PlayerController> idle = new PlayerIdle();
-        //    IState<PlayerController> move = new PlayerMove();
-        //    IState<PlayerController> crouch = new PlayerCrouch();
-        //    IState<PlayerController> jump = new PlayerJump();
-
-        //    playerStates.Add(PlayerState.Idle, idle);
-        //    playerStates.Add(PlayerState.Move, move);
-        //    playerStates.Add(PlayerState.Crouch, crouch);
-        //    playerStates.Add(PlayerState.Jump, jump);
-        //}
-
-        //void InitPlayerStateMachine()
-        //{
-        //    if (playerSM == null)
-        //    {
-        //        playerSM = new StateMachine<PlayerController>(this, playerStates[PlayerState.Idle]);
-        //    }
-        //}
-
-        //public void ChangeState(PlayerState state)
-        //{
-        //    playerSM.SetState(playerStates[state]);
-        //}
-
-        #endregion
-
         private void Awake()
         {
             GetComponents();
-
         }
 
         void Start()
         {
-            //SetPlayerStates();
-            //InitPlayerStateMachine();
             mouseControl.Init(transform, controlCamera);
             InitHeadBobSystem();
         }
 
         void Update()
         {
-            //playerSM.OperateUpdate();
             LockMouseCursor();
         }
 
@@ -217,7 +174,6 @@ namespace WarGame
         {
             mouseControl.LookRotation(Time.fixedDeltaTime);
 
-            //playerSM.OperateFixedUpdate();
             if (controller.isGrounded)
             {
                 Move();
@@ -297,8 +253,6 @@ namespace WarGame
                 }
             }
         }
-
-
 
         public void Freeze(bool value)
         {
@@ -493,7 +447,7 @@ namespace WarGame
 
         public bool IsHumanoidTarget(GameObject target)
         {
-            return target.CompareTag("Player") || target.CompareTag("Enemy") || target.CompareTag("Ally");
+            return target.CompareTag(Player) || target.CompareTag(RUSoldier) || target.CompareTag(USSoldier);
         }
 
         [System.Serializable]
