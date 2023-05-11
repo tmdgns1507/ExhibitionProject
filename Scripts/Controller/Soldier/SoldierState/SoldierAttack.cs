@@ -6,30 +6,26 @@ using UnityEngine.AI;
 namespace WarGame
 {
     public class SoldierAttack : IState<SoldierController>
-    {        
+    {
+        GameObject nearestTarget = null;
         float nextFireTime = 0f;
 
         public void OperateEnter(SoldierController controller)
         {
+            controller.agent.isStopped = true;
             controller.animator.SetBool("Idling", true);
-            controller.agent.destination = controller.transform.position;
-            controller.agent.isStopped = true;            
         }
 
         public void OperateUpdate(SoldierController controller)
         {
-            GameObject nearestTarget = controller.rader.GetNearestTarget(controller.rader.seenObjects);
-            ChangeState(controller, nearestTarget);
-
-                        
-            if(controller.IsValidTarget(nearestTarget))
-                controller.transform.LookAt(nearestTarget.transform);
-
+            DetectTarget(controller);
+            ChangeState(controller);
             controller.TakeDamageAnim();
-            
+
             nextFireTime += Time.deltaTime;
-            if (nearestTarget != null && !nearestTarget.CompareTag("Temp"))
+            if (nearestTarget != null)
             {
+                controller.transform.LookAt(nearestTarget.transform);
                 if (nextFireTime >= controller.data.autoFireRate)
                 {
                     Fire(controller, nearestTarget);
@@ -45,23 +41,30 @@ namespace WarGame
         public void OperateExit(SoldierController controller)
         {
             controller.agent.isStopped = false;
+            controller.animator.SetBool("Idling", false);
         }        
 
-        void ChangeState(SoldierController controller, GameObject nearestTarget = null)
+        void ChangeState(SoldierController controller)
         {
-            if (!controller.health.IsAlive) controller.ChangeState(SoldierController.SoldierState.Dead);
+            if (!controller.health.IsAlive) 
+                controller.ChangeState(SoldierController.SoldierState.Dead);
 
-            if (controller.IsOccupied) controller.ChangeState(SoldierController.SoldierState.Occupied);
+            else if (controller.IsOccupied) 
+                controller.ChangeState(SoldierController.SoldierState.Occupied);
 
-            if (!controller.IsValidTarget(nearestTarget)) controller.ChangeState(SoldierController.SoldierState.Move);
-
-            if (controller.rader.GetSqrMagnitude(nearestTarget) > controller.data.sightDistance) 
+            else if (!controller.IsAttackableTarget(nearestTarget)) 
                 controller.ChangeState(SoldierController.SoldierState.Move);
 
-            if (controller.rader.GetSqrMagnitude(nearestTarget) > controller.ShootDistance
-                && controller.rader.GetSqrMagnitude(nearestTarget) < controller.data.sightDistance)
+            else if (controller.rader.GetSqrMagnitude(nearestTarget) > controller.ShootDistance)
                 controller.ChangeState(SoldierController.SoldierState.Track);
+        }
 
+        void DetectTarget(SoldierController controller)
+        {
+            if (controller.NeedRaderSystem)
+                nearestTarget = controller.rader.GetNearestTarget(controller.rader.detectedTargets);
+            else
+                nearestTarget = null;
         }
 
         void Fire(SoldierController controller, GameObject nearestTarget = null)
@@ -72,8 +75,7 @@ namespace WarGame
         }
 
         void ShootAnim(SoldierController controller)
-        {
-            controller.animator.SetBool("Idling", true);
+        {            
             controller.animator.SetTrigger("Use");
         }
 
@@ -87,7 +89,7 @@ namespace WarGame
             Ray r = new Ray(hands.transform.position, rayDirection);
             RaycastHit hitInfo;
 
-            if (Physics.Raycast(r, out hitInfo, 1000f, controller.FireCollisionLayer, QueryTriggerInteraction.Ignore))
+            if (Physics.Raycast(r, out hitInfo, controller.ShootDistance, controller.FireCollisionLayer, QueryTriggerInteraction.Ignore))
             {
                 IHittableObject hittable = hitInfo.collider.GetComponent<IHittableObject>();
 

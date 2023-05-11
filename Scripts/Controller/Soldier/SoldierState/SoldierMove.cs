@@ -7,23 +7,27 @@ namespace WarGame
 {
     public class SoldierMove : IState<SoldierController>
     {
+        GameObject nearestTarget;
+
         public void OperateEnter(SoldierController controller)
         {
             controller.agent.isStopped = false;
             controller.animator.SetBool("Idling", false);
             controller.animator.SetBool("Walk", false);
+
+            controller.agent.SetDestination(controller.destination.transform.position);
         }
 
         public void OperateUpdate(SoldierController controller)
         {
+            DetectTarget(controller);
             controller.TakeDamageAnim();
             ChangeState(controller);
         }
 
         public void OperateFixedUpdate(SoldierController controller)
         {
-            controller.SetNaviAgent(controller.data.runSpeed, false);
-            controller.agent.destination = controller.destination.transform.position;
+            controller.SetNaviAgent(controller.data.runSpeed);            
         }
 
         public void OperateExit(SoldierController controller)
@@ -31,22 +35,29 @@ namespace WarGame
 
         }
 
+        void DetectTarget(SoldierController controller)
+        {
+            if (controller.NeedRaderSystem)
+                nearestTarget = controller.rader.GetNearestTarget(controller.rader.detectedTargets);
+            else
+                nearestTarget = null;
+        }
+
         void ChangeState(SoldierController controller)
         {
-            GameObject nearestTarget = controller.rader.GetNearestTarget(controller.rader.seenObjects);
+            if (!controller.health.IsAlive) 
+                controller.ChangeState(SoldierController.SoldierState.Dead);
 
-            if (!controller.health.IsAlive) controller.ChangeState(SoldierController.SoldierState.Dead);
+            else if (controller.IsOccupied) 
+                controller.ChangeState(SoldierController.SoldierState.Occupied);
 
-            if (controller.IsOccupied) controller.ChangeState(SoldierController.SoldierState.Occupied);
-
-            if (controller.IsValidTarget(nearestTarget) && nearestTarget != null)
+            else if (controller.IsAttackableTarget(nearestTarget))
             {
-                if (controller.rader.GetSqrMagnitude(nearestTarget) < controller.ShootDistance)
+                if (controller.rader.GetSqrMagnitude(nearestTarget) <= controller.ShootDistance)
                     controller.ChangeState(SoldierController.SoldierState.Attack);
                 else
                     controller.ChangeState(SoldierController.SoldierState.Track);
             }
-
         }
     }
 }

@@ -8,77 +8,81 @@ namespace WarGame
 {
     public class RaderSystem : MonoBehaviour
     {
-        public GameObject temp;
+        float viewAngle;
+        float sightDistance;
 
-        [HideInInspector] public List<GameObject> seenObjects;
+        [Header("Draw Ray")]
+        public bool isDrawRays = false;
+        public bool isDrawVisionCone = false;
+        public bool isDrawOverlapSphere = false;
 
         SoldierData data;
-        GameObject parent;
-        string tag = string.Empty;
-        bool drawRays;
-        bool drawVisionCone;
-        bool drawOverlapSphere;
-        bool isClearingTargetObj;
+
+        public GameObject soldier;
+        bool isClearingDetectedTargets;
         Vector3 offset = Vector3.zero;
 
+        public List<GameObject> detectedTargets;
         int OverlapSphereLayer
         {
             get
             {
-                if (data.IsEnemy)
+                if (data.IsRuSoldier)
                 {
-                    return 1 << LayerMask.NameToLayer("Player") | 1 << LayerMask.NameToLayer("Ally");
+                    return 1 << LayerMask.NameToLayer(data.PlayerLayer) | 1 << LayerMask.NameToLayer(data.USLayer);
                 }
-                else if (!data.IsEnemy)
+                else if (data.IsUsSoldier)
                 {
-                    return 1 << LayerMask.NameToLayer("Enemy");
+                    return 1 << LayerMask.NameToLayer(data.RULayer);
                 }
                 else
-                    return 0;
+                {
+                    return -1;
+                }
             }
         }
 
         private void Awake()
         {
             data = GetComponentInParent<SoldierData>();
-
-            parent = transform.parent.gameObject;
-            tag = parent.tag;
+            soldier = transform.parent.gameObject;
+            viewAngle = data.viewAngle;
+            sightDistance = data.sightDistance;
         }
 
         private void OnEnable()
         {
-            if (seenObjects != null) seenObjects.Clear();
+            if (detectedTargets != null) detectedTargets.Clear();
         }
 
         void Start()
         {
-            seenObjects = new List<GameObject>();
+            detectedTargets = new List<GameObject>();
         }
 
         void Update()
         {
-            SearchTargetObject();
+            DoRaderSystem();
         }
 
         public float GetSqrMagnitude(GameObject target)
         {
-            return (target.transform.position - parent.transform.position).sqrMagnitude;
+            return (target.transform.position - soldier.transform.position).sqrMagnitude;
         }
 
-        public GameObject GetNearestTarget(List<GameObject> seenObjs)
+        public GameObject GetNearestTarget(List<GameObject> detectedList)
         {
-            float minDistance = data.sightDistance;
-            GameObject target = temp;
+            GameObject target = null;
+            float visibility = data.sightDistance;
 
-            if (seenObjs == null) return target;
+            if (detectedList == null) return null;
 
-            foreach (GameObject go in seenObjs)
+            foreach (GameObject go in detectedList)
             {
                 float targetDistance = GetSqrMagnitude(go);
-                if (targetDistance < minDistance)
+                if (targetDistance < visibility)
                 {
-                    minDistance = targetDistance;
+                    visibility = targetDistance;
                     target = go;
                 }
             }
@@ -86,32 +90,30 @@ namespace WarGame
             return target;
         }
 
-        void SearchTargetObject()
+        void DoRaderSystem()
         {
-            drawRays = data.isDrawRays;
-            drawVisionCone = data.isDrawVisionCone;
-            drawOverlapSphere = data.isDrawVisionCone;
-
             RaycastHit hit;
 
-            Collider[] hitColliders = Physics.OverlapSphere(parent.transform.position, data.sightDistance, OverlapSphereLayer);
+            Collider[] hitColliders = Physics.OverlapSphere(soldier.transform.position, data.sightDistance, OverlapSphereLayer);
             for (int i = 0; i < hitColliders.Length; i += 1)
             {
                 GameObject target = hitColliders[i].gameObject;
 
-                Vector3 dirToTarget = (target.transform.position - parent.transform.position).normalized;
-                if (Vector3.Angle(parent.transform.forward, dirToTarget) < data.viewAngle / 2)
+                Vector3 dirToTarget = (target.transform.position - soldier.transform.position).normalized;
+                if (Vector3.Angle(soldier.transform.forward, dirToTarget) < viewAngle / 2)
                 {
-                    if (drawRays)
-                        Debug.DrawRay(parent.transform.position, dirToTarget * data.sightDistance, Color.blue);
+                    if (isDrawRays)
+                        Debug.DrawRay(soldier.transform.position, dirToTarget * data.sightDistance, Color.blue);
 
-                    if (Physics.Raycast(parent.transform.position, dirToTarget, out hit, data.sightDistance))
+                    if (Physics.Raycast(soldier.transform.position, dirToTarget, out hit, data.sightDistance))
                     {
-                        if (hit.collider.gameObject.activeSelf)
-                            seenObjects.Add(hit.collider.gameObject);
+                        if (!data.IsCompareWithValidTarget(hit.collider.gameObject)) continue;
 
-                        if (!isClearingTargetObj)
-                            StartCoroutine(ClearSeenList());
+                        if (hit.collider.gameObject.activeSelf && !detectedTargets.Contains(hit.collider.gameObject))
+                            detectedTargets.Add(hit.collider.gameObject);
+
+                        if (!isClearingDetectedTargets)
+                            StartCoroutine(ClearDetectedList());
                     }
                 }
             }
@@ -119,32 +121,32 @@ namespace WarGame
 
         public void OnDrawGizmos()
         {
-            if (drawOverlapSphere)
-                Gizmos.DrawWireSphere(parent.transform.position, data.sightDistance);
+            if (isDrawOverlapSphere)
+                Gizmos.DrawWireSphere(soldier.transform.position, sightDistance);
 
-            if (drawVisionCone)
+            if (isDrawVisionCone)
             {
 #if UNITY_EDITOR
                 Color mColor = Handles.color;
                 Color color = Color.blue;
                 color.a = 0.1f;
                 Handles.color = color;
-                var halfFOV = data.viewAngle * 0.5f;
-                var beginDirection = Quaternion.AngleAxis(-halfFOV, (Vector3.up)) * (parent.transform.forward);
-                Handles.DrawSolidArc(parent.transform.TransformPoint(offset), parent.transform.up, beginDirection,
-                    data.viewAngle, data.sightDistance);
+                var halfFOV = viewAngle * 0.5f;
+                var beginDirection = Quaternion.AngleAxis(-halfFOV, (Vector3.up)) * (soldier.transform.forward);
+                Handles.DrawSolidArc(soldier.transform.TransformPoint(offset), soldier.transform.up, beginDirection,
+                    viewAngle, data.sightDistance);
                 Handles.color = mColor;
 #endif
             }
 
         }
 
-        IEnumerator ClearSeenList()
+        IEnumerator ClearDetectedList()
         {
-            isClearingTargetObj = true;
+            isClearingDetectedTargets = true;
             yield return new WaitForSecondsRealtime(0.5f);
-            seenObjects.Clear();
-            isClearingTargetObj = false;
+            detectedTargets.Clear();
+            isClearingDetectedTargets = false;
         }
 
 

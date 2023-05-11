@@ -9,6 +9,8 @@ namespace WarGame
 
         public void OperateEnter(SoldierController controller)
         {
+            controller.isForcedRaderShutDown = true;
+
             controller.animator.SetBool("Idling", true);
 
             controller.agent.destination = controller.gameObject.transform.position;

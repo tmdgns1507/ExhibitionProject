@@ -17,30 +17,27 @@ namespace WarGame
 
         [Header("Destinations")]
         public Transform startPoint;
-        public List<Transform> destinations;
+        public List<Transform> destinations;        
         public float occupiedDistance = 8f;
         public Transform destination;
 
         [Header("Others")]
         public LayerMask FireCollisionLayer;
 
-        [HideInInspector] public List<GameObject> seenObjects;
+        [HideInInspector] public List<GameObject> detectedTargets;        
         Vector3 offset = Vector3.zero;
 
         public SoldierData data;
         public SoldierHealth health;
         public RaderSystem rader;
+        GameObject raderSystem;
         StateMachine<SoldierController> soldierSM;
         Dictionary<SoldierState, IState<SoldierController>> soldierStates = new Dictionary<SoldierState, IState<SoldierController>>();
         [HideInInspector] public Animator animator;
         [HideInInspector] public CharacterController characterController;
         [HideInInspector] public NavMeshAgent agent;
 
-        bool isClearingTargetObj;
-        bool drawRays;
-        bool drawVisionCone;
-        bool drawOverlapSphere;
-        string hands = string.Empty;
+        [HideInInspector] public bool isForcedRaderShutDown = false;
 
         public enum SoldierState
         {
@@ -52,7 +49,7 @@ namespace WarGame
             Dead
         }
 
-        public bool IsEnemy { get { return data.IsEnemy; } }
+        public bool IsEnemy { get { return data.IsRuSoldier; } }
         public float ShootDistance { get { return data.sightDistance * 0.5f; } }
         public bool IsOccupied
         {
@@ -65,22 +62,42 @@ namespace WarGame
                     return false;
             }
         }
-        int OverlapSphereLayer
+
+        public bool IsSightDistance
         {
             get
             {
-                if (data.IsEnemy)
+                foreach(var targetData in data.targetDistances)
                 {
-                    return 1 << LayerMask.NameToLayer("Player") | 1 << LayerMask.NameToLayer("Ally");
+                    if (targetData.Value <= data.sightDistance) return true;
                 }
-                else if (!data.IsEnemy)
-                {
-                    return 1 << LayerMask.NameToLayer("Enemy");
-                }
-                else
-                    return 0;
+                return false;
             }
         }
+        
+        public bool IsViewAngle
+        {            
+            get
+            {
+                foreach(var targetData in data.targetDistances)
+                {
+                    GameObject target = targetData.Key;
+                    Vector3 dirToTarget = (target.transform.position - this.transform.position).normalized;
+                    if (Vector3.Angle(this.transform.forward, dirToTarget) < data.viewAngle / 2) return true;
+                }
+                return false;
+            }
+        }
+
+        public bool NeedRaderSystem
+        {
+            get
+            {
+                if (IsSightDistance && IsViewAngle) return true;
+                else return false;
+            }
+        }
+
 
         private void Awake()
         {
@@ -90,13 +107,13 @@ namespace WarGame
 
         void Start()
         {
-            SetNaviAgent(); // default
-            destination = destinations[0];
+            SetNaviAgent(); // default            
         }
 
         void Update()
         {
-            //SearchTargetObject();
+            ApplyGravity();
+            OnRaderSystem();
             soldierSM.OperateUpdate();
         }
 
@@ -105,38 +122,18 @@ namespace WarGame
             soldierSM.OperateFixedUpdate();
         }
 
-        bool IsValidArea(List<float> distances)
+        public void OnRaderSystem()
         {
-            foreach (var dis in distances)
+            if(isForcedRaderShutDown)
             {
-                if (dis <= data.sightDistance)
-                    return true;
-            }
-            return false;
-        }
-
-        List<float> GetAllTargetsDistance()
-        {
-            List<float> distances = new List<float>();
-            foreach (var target in data.distanceToTargets)
-            {
-                distances.Add(target.Value);
+                raderSystem.SetActive(false);
+                return;
             }
 
-            return distances;
-        }
-
-        public bool IsValidTarget(GameObject target)
-        {
-            if(gameObject.CompareTag("Enemy"))
-            {
-                if (target.CompareTag("Ally") || target.CompareTag("Player")) return true;
-            }
-            else if(gameObject.CompareTag("Ally"))
-            {
-                if (target.CompareTag("Enemy")) return true;
-            }
-            return false;
+            if (NeedRaderSystem)
+                raderSystem.SetActive(true);
+            else
+                raderSystem.SetActive(false);
         }
 
         void GetComponents()
@@ -147,6 +144,7 @@ namespace WarGame
             health = GetComponent<SoldierHealth>();
             agent = GetComponent<NavMeshAgent>();
             rader = GetComponentInChildren<RaderSystem>();
+            raderSystem = GetComponentInChildren<RaderSystem>().gameObject;
         }
 
         public void SetNaviAgent(float movementSpeed = 2f, bool autoBreaking = false, float angularSpeed = 360f, float stoppingDistance = 1f)
@@ -163,7 +161,49 @@ namespace WarGame
                 animator.SetTrigger("Pain");
         }
 
+        public bool IsAttackableTarget(GameObject target)
+        {
+            if (target == null) return false;
 
+            bool isAttackable = false;
+            GameObject hands = data.handsObject;
+            Vector3 rayDirection = this.transform.forward;
+            if (target != null) rayDirection = (target.transform.position - hands.transform.position).normalized;
+
+            Ray r = new Ray(hands.transform.position, rayDirection);
+            RaycastHit hitInfo;
+
+            if (Physics.Raycast(r, out hitInfo, ShootDistance, FireCollisionLayer, QueryTriggerInteraction.Ignore))
+            {
+                if (hitInfo.collider.gameObject == target)
+                    isAttackable = true;
+                else
+                    isAttackable = false;
+            }
+
+            return isAttackable;
+        }
+
+
+        public void ApplyGravity()
+        {
+            if (characterController.isGrounded) return;
+
+            Vector3 velocity = Vector3.zero;
+            velocity += Vector3.down * data.gravity * Time.fixedDeltaTime;
+            characterController.Move(velocity);
+        }
+
+
+        public bool IsShootDistance(GameObject target)
+        {
+            if (!NeedRaderSystem) return false;
+
+            if (rader.GetSqrMagnitude(target) <= ShootDistance)
+                return true;
+            else
+                return false;
+        }
 
         #region FSM
         void SetPlayerStates()

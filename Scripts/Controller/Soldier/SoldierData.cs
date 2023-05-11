@@ -9,31 +9,33 @@ namespace WarGame
     {
         [Header("Stats")]
         public GameObject handsObject;
-        public float damageAmount = 10f;
-        public float speed = 0.5f;
-        public float runSpeed = 1.5f;
+        public float damageAmount = 20f;
+        public float speed = 0.25f;
+        public float runSpeed = 0.4f;
         public float waitTime = 3f;
         public float autoFireRate = 0.3f;
         public float effectiveAttackRange = 20f;
         public float viewAngle = 110f;
         public float sightDistance = 2000f;
         public float gravity = 9.81f;
-        
-        [Header("Draw Ray")]
-        public bool isDrawRays = true;
-        public bool isDrawVisionCone = true;
-        public bool isDrawOverlapSphere = false;
 
 
         [HideInInspector] public string Player = "Player";
-        [HideInInspector] public string Ally = "Ally";
-        [HideInInspector] public string Enemy = "Enemy";
-        bool isEnemy = false;
+        [HideInInspector] public string USSoldier = "USSoldier";
+        [HideInInspector] public string RUSoldier = "RUSoldier";
+        [HideInInspector] public string PlayerLayer = "Player";
+        [HideInInspector] public string USLayer = "USLayer";
+        [HideInInspector] public string RULayer = "RULayer"; 
+        [HideInInspector] public string RU_Destinations = "RU_Destinations";
+        [HideInInspector] public string US_Destinations = "US_Destinations";
+        bool isRuSoldier = false;
+        bool isUsSoldier = false;
 
         [HideInInspector] public float retreatDistance;
-        [HideInInspector] public Dictionary<GameObject, float> distanceToTargets = new Dictionary<GameObject, float>();
+        [HideInInspector] public Dictionary<GameObject, float> targetDistances = new Dictionary<GameObject, float>();
 
-        public bool IsEnemy { get { return isEnemy; } }
+        public bool IsRuSoldier { get { return isRuSoldier; } }
+        public bool IsUsSoldier { get { return isUsSoldier; } }
 
         private void Awake()
         {
@@ -43,57 +45,78 @@ namespace WarGame
 
         private void OnEnable()
         {
-            distanceToTargets = new Dictionary<GameObject, float>();
-            distanceToTargets.Clear();
+            
+            targetDistances = new Dictionary<GameObject, float>();
+            targetDistances.Clear();
         }
 
         private void Update()
         {
             retreatDistance = sightDistance + (sightDistance / 3);
-            SetDistanceToTargets();
+            UpdateTargetsDistance();
         }
 
-        void SetDistanceToTargets()
-        {
-            if (distanceToTargets == null) return;
 
-            foreach (GameObject target in GetTargets(IsEnemy))
+
+        void UpdateTargetsDistance()
+        {
+            foreach (GameObject target in GetTargets())
             {
-                if (!distanceToTargets.ContainsKey(target))
-                    distanceToTargets.Add(target, GetTargetDistance(target));
+                if (!targetDistances.ContainsKey(target))
+                    targetDistances.Add(target, GetDistance(target));
                 else
-                    distanceToTargets[target] = GetTargetDistance(target);
+                    targetDistances[target] = GetDistance(target);
             }
         }
 
-        List<GameObject> GetTargets(bool isEnemy)
+        List<GameObject> GetTargets()
         {
             List<GameObject> targets = new List<GameObject>();
-            if (isEnemy)
+            if (IsRuSoldier)
             {
-                targets = GameObject.FindGameObjectsWithTag("Ally").ToList();
-                targets.Add(GameObject.FindGameObjectWithTag("Player"));
+                targets = GameObject.FindGameObjectsWithTag(USSoldier).ToList();
+                targets.Add(GameObject.FindGameObjectWithTag(Player));
             }
             else
             {
-                targets = GameObject.FindGameObjectsWithTag("Enemy").ToList();
+                targets = GameObject.FindGameObjectsWithTag(RUSoldier).ToList();
             }
             return targets;
         }
 
-        float GetTargetDistance(GameObject target)
+        float GetDistance(GameObject target)
         {
             return (target.transform.position - this.transform.position).sqrMagnitude;
         }
 
         void IdentificationOfPeer()
         {
-            if (string.CompareOrdinal(Enemy, this.gameObject.tag) == 0)
-                isEnemy = true;
-            else if (string.CompareOrdinal(Ally, this.gameObject.tag) == 0)
-                isEnemy = false;
+            if (gameObject.CompareTag(RUSoldier))
+            {
+                isRuSoldier = true;
+                isUsSoldier = false;
+            }
+            else if (gameObject.CompareTag(USSoldier))
+            {
+                isUsSoldier = true;
+                isRuSoldier = false;
+            }
             else
                 Debug.LogError($" @{this.gameObject.name} is Invalid Tag.");
+        }
+
+        public bool IsCompareWithValidTarget(GameObject target)
+        {
+            if (IsRuSoldier)
+            {
+                if (target.CompareTag(USSoldier) || target.CompareTag(Player)) return true;
+            }
+            else if (IsUsSoldier)
+            {
+                if (target.CompareTag(RUSoldier)) return true;
+            }
+
+            return false;
         }
     }
 }

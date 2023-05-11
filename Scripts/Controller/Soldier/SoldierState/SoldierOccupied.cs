@@ -7,13 +7,16 @@ namespace WarGame
 {
     public class SoldierOccupied : IState<SoldierController>
     {
-        int destinationCount = 0;
+        Transform currDestination = null;
 
         public void OperateEnter(SoldierController controller)
-        {            
+        {
+            controller.isForcedRaderShutDown = true;
             controller.agent.isStopped = true;
-            destinationCount = controller.destinations.Count;
-            controller.destination = GetNextDestination(controller);
+            
+            currDestination = controller.destination;   // Init currDest
+            SetNextDestination(controller);
+
             controller.ChangeState(SoldierController.SoldierState.Move);
         }
 
@@ -29,28 +32,25 @@ namespace WarGame
 
         public void OperateExit(SoldierController controller)
         {
+            controller.isForcedRaderShutDown = false;
             controller.agent.isStopped = false;
         }
 
-        int GetCurrentDestinationIdx(SoldierController controller)
+        void SetNextDestination(SoldierController controller)
         {
-            for (int i = 0; i < destinationCount; i++)
+            if (controller.destinations.Count <= 1)
             {
-                if (controller.destinations[i].Equals(controller.destination))
-                    return i;
+                Debug.LogError($" ## {controller.gameObject.name} agent didn't have more than one destination.");
+                return;
             }
-            return 0;            
-        }
 
-        Transform GetNextDestination(SoldierController controller)
-        {
-            while(destinationCount > 0)
+            while(currDestination == controller.destination)
             {
-                int nextDest = Random.Range(0, destinationCount);
-                if (nextDest != GetCurrentDestinationIdx(controller))
-                    return controller.destinations[nextDest];
+                int nextDest = Random.Range(0, controller.destinations.Count);
+                currDestination =  controller.destinations[nextDest];
             }
-            return controller.destinations[0];
+
+            controller.destination = currDestination;
         }
     }
 }
