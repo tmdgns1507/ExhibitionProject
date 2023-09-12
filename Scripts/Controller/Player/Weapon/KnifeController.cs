@@ -68,6 +68,8 @@ namespace WarGame
             }
 
             Controller.PlayerFreezeChanged.AddListener(FreezeChanged);
+
+            if (hitEffectPool != null) GameObject.Destroy(hitEffectPool);
         }
 
         void InitKnifeParams()

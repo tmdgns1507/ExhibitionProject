@@ -8,138 +8,34 @@ namespace WarGame
     [DisallowMultipleComponent]
     [RequireComponent(typeof(CharacterController))]
     [RequireComponent(typeof(CapsuleCollider))]
-    public class PlayerController : MonoBehaviour
+    public class PlayerController : MoveController
     {
-        [System.Serializable]
-        public class PlayerStandState
-        {
-            public float ControlCameraHeight;
-            public float ColliderHeight;
-            public float ColliderCenterHeight;
-        }
 
         #region Variables
 
         [Header("Helper")]
-        public MouseControl mouseControl;
-        public HeadBob headBob;
-        public LayerMask groundLayer;
         public MeshRenderer nearBlurSphere;
+        public GameObject WeatherSystem;
+        public PlayerHands Hands;                
+        GameObject weatherEffect;
+        GameObject weatherSound;
+        protected PlayerDamageHandler damageHandler;         
 
-        [Header("Animation Curve")]
-        public AnimationCurve HeadBobBlendCurve;
-        public AnimationCurve HeadBobPeriodBlendCurve;
-        public AnimationCurve RunIncreaseSpeedCurve;
-        public AnimationCurve StateChangeCurve;
-
-        [Header("State")]
-        public PlayerStandState StandState;
-        public PlayerStandState CrouchState;
-        float stateChangeSpeed = 3f;
-        [HideInInspector] public float weightSmooth = 6f;
-
-        [Header("Movement")]
-        public float speed = 2f;
-        public float maxSpeed = 1f;
-        public float jumpSpeed = 4f;
-        float crouchSpeedMultiplier = 0.75f;
-        float runSpeedMultiplier = 2f;
-        float runIncreaseSpeedTime = 1f;
-        float runSpeedThreshold = 1f;
-        float gravity = 9.81f;
-        float stickToGround = 9.81f;
-
-        [Header("Others")]
-        public Transform directionRefence;
-        public Camera playerCamera;
-        public Transform controlCamera;
-        public Transform handsHeadBobTarget;
-        public TransformNoise cameraNoise;
-
-        float idleNoise = 0.5f;
-        float runNoise = 4f;
-        float cameraHeadbobWeight = 1f;
-        float handsHeadbobWeight = 0.3f;
-        [HideInInspector] public float handsHeadbobMultiplier = 1f;
-        [HideInInspector] public Vector3 playerVelocity = Vector3.zero;
-        Vector3 oldPlayerVelocity = Vector3.zero;
-        Vector3 oldPosition;
-        Vector3 oldHandHeadBobPos;
-        Vector3 oldCameraHeadBobPos;
-        Vector3 controlCameraPosition;
-        float standStateBlend;
-        float runTime = 0f;
-        float defaultHandsHeadbobWeight;
-
-        public PlayerHands Hands;
-        public PostProcessingController PPController;
-        public PostProcessingController.DepthOfFieldSettings DefaultDofSettings;
-        public PlayerFreezeChangedEvent PlayerFreezeChanged = new PlayerFreezeChangedEvent();
-        CapsuleCollider charactarCollider;
-        CharacterController controller;
-        PlayerDamageHandler damageHandler;
-
-        bool isMove = false;
-        bool isFreeze = false;
-        bool isRunning = false;
-        bool isOldGrounded = false;
-        bool isCrouching = false;
-              
         #endregion
 
-        #region Params
+        #region StringParams
 
-        string ForwardAxisParam = "Vertical";
-        string StrafeAxisParam = "Horizontal";
+
         string HandsParam = "Hands";
-        string NeckParam = "Neck";
-        string Player = "Player";
+        string NeckParam = "Neck";        
         string USSoldier = "USSoldier";
         string RUSoldier = "RUSoldier";
-
-        #endregion
-
-        #region Events
-
-        [HideInInspector] public UnityAction RunStartEvent;
-        [HideInInspector] public UnityAction JumpStartEvent;
-        [HideInInspector] public UnityAction JumpFallEvent;
-        [HideInInspector] public UnityAction JumpEndEvent;
-        [HideInInspector] public UnityAction CrouchEvent;
-        [HideInInspector] public UnityAction StandUpEvent;
+        string Building = "Building";
+        string WeatherEffect = "UniStormEffect";
 
         #endregion
 
         #region Properties
-
-        public Vector3 PlayerVelocity { get { return controller.velocity; } }
-                
-        public bool IsFreezed { get { return isFreeze; } }
-
-        public bool IsRunning { get { return isRunning; } }
-
-        public bool IsJumpKey { get { if (Input.GetKey(KeyCode.Space)) return true; else return false; } }
-
-        public bool IsCrouching { get { return isCrouching; } }
-
-        public bool IsCrouchKey { get { if (Input.GetKey(KeyCode.LeftControl)) return true; else return false; } }
-
-        public bool IsGrounded { get { return controller.isGrounded; } }
-
-        public bool IsMoving
-        {
-            get
-            {
-                if (PlayerVelocity.x != 0f || PlayerVelocity.z != 0f)
-                    isMove = true;
-                else
-                    isMove = false;
-
-                return isMove;
-            }
-        }
-
-        public float DefaultHandsHeadbobWeight { get { return defaultHandsHeadbobWeight; } }
 
         public PlayerDamageHandler DamageHandler
         {
@@ -154,8 +50,8 @@ namespace WarGame
 
         #endregion
 
-        private void Awake()
-        {
+        void Awake()
+        {            
             GetComponents();
         }
 
@@ -168,6 +64,7 @@ namespace WarGame
         void Update()
         {
             LockMouseCursor();
+            ApplyWeatherFX();
         }
 
         void FixedUpdate()
@@ -199,79 +96,43 @@ namespace WarGame
             cameraNoise = Camera.main.GetComponent<TransformNoise>();
         }
 
-        void LockMouseCursor()
+        void ApplyWeatherFX()
         {
-            if (Input.GetMouseButtonDown(2) || Input.GetMouseButtonDown(1))
+            if (WeatherSystem.activeSelf == false) return;
+
+            if (weatherEffect == null)
+                weatherEffect = GameObject.FindGameObjectWithTag(WeatherEffect);
+
+            RaycastHit[] hits = Physics.RaycastAll(transform.position, playerYdir, 1000f);
+            foreach (var hit in hits)
             {
-                Cursor.lockState = CursorLockMode.Locked;
-                Cursor.visible = false;
-            }
-
-            if (Input.GetKeyDown(KeyCode.Escape))
-            {
-                Cursor.lockState = CursorLockMode.None;
-                Cursor.visible = true;
-            }
-        }
-
-        void InitHeadBobSystem()
-        {
-            defaultHandsHeadbobWeight = handsHeadbobWeight;
-            controlCameraPosition = controlCamera.localPosition;
-        }
-
-        void UpdateCurrentPhysics()
-        {
-            oldPlayerVelocity = playerVelocity;
-            isOldGrounded = controller.isGrounded;
-            oldPosition = transform.position;
-        }
-
-        public void UpdateDefaultDeath()
-        {
-            mouseControl.RotateCameraSmoothlyTo(0, Time.deltaTime);
-        }
-
-        public void JumpEndControl()
-        {
-            if (controller.isGrounded && !isOldGrounded)
-            {
-                if (JumpEndEvent != null)
+                if (weatherEffect != null)
                 {
-                    JumpEndEvent();
+                    if (hit.collider.gameObject.layer.Equals(LayerMask.NameToLayer(Building)))
+                    {
+                        weatherEffect.SetActive(false);
+                        break;
+                    }
+                    else
+                    {
+                        weatherEffect.SetActive(true);
+                    }
                 }
             }
         }
 
-        public void JumpFallControl()
-        {
-            if (oldPlayerVelocity.y > 0 && playerVelocity.y < 0)
-            {
-                if (JumpFallEvent != null)
-                {
-                    JumpFallEvent();
-                }
-            }
-        }
-
-        public void Freeze(bool value)
+        public override void Freeze(bool value)
         {
             if (!value && !damageHandler.Health.RealIsAlive)
                 return;
 
-            mouseControl.Enabled = !value;
-            isFreeze = value;
-
-            PlayerFreezeChanged.Invoke(isFreeze);
+            base.Freeze(value);
         }
 
-        public void SetNoiseEnabled(bool isEnabled)
+        protected override void Move()
         {
-            cameraNoise.enabled = isEnabled;
-        }
+            if (IsTalking == true) return;
 
-        void Move()
-        {
             float h = Input.GetAxis(StrafeAxisParam);
             float v = Input.GetAxis(ForwardAxisParam);
 
@@ -362,216 +223,11 @@ namespace WarGame
             }
         }
 
-        void Run()
-        {
-            if (!isRunning)
-            {
-                isRunning = true;
-                if (RunStartEvent != null)
-                {
-                    RunStartEvent();
-                }
-            }
-        }
-
-        void Jump()
-        {
-            playerVelocity.y = jumpSpeed;
-            if (JumpStartEvent != null)
-                JumpStartEvent();
-        }
-
-        void Crouch()
-        {
-            isCrouching = true;
-
-            if (CrouchEvent != null)
-            {
-                CrouchEvent();
-            }
-        }
-
-        void StandUp()
-        {
-            isCrouching = false;
-
-            if (damageHandler.Health.RealIsAlive)
-            {
-                if (StandUpEvent != null)
-                {
-                    StandUpEvent();
-                }
-            }
-        }
-
-        void ChangeStandState()
-        {
-            standStateBlend = Mathf.MoveTowards(standStateBlend, isCrouching ? 1f : 0f, Time.deltaTime * stateChangeSpeed);
-
-            charactarCollider.height = Mathf.Lerp(
-                StandState.ColliderHeight,
-                CrouchState.ColliderHeight,
-                StateChangeCurve.Evaluate(standStateBlend)
-                );
-
-
-            Vector3 colliderCenter = charactarCollider.center;
-
-            colliderCenter.y = Mathf.Lerp(
-                StandState.ColliderCenterHeight,
-                CrouchState.ColliderCenterHeight,
-                StateChangeCurve.Evaluate(standStateBlend)
-                );
-            charactarCollider.center = colliderCenter;
-
-            controller.height = charactarCollider.height;
-            controller.center = charactarCollider.center;
-
-            controlCameraPosition.y = Mathf.Lerp(
-                StandState.ControlCameraHeight,
-                CrouchState.ControlCameraHeight,
-                StateChangeCurve.Evaluate(standStateBlend)
-                );
-        }
-
-        public void SetSensivityMultiplier(float multiplier)
-        {
-            mouseControl.SensivityMultiplier = multiplier;
-        }
-
-        public void ApplyGravity()
-        {
-            playerVelocity += Vector3.down * gravity * Time.fixedDeltaTime;
-            controller.Move(playerVelocity * Time.fixedDeltaTime);
-        }               
-
         public bool IsHumanoidTarget(GameObject target)
         {
             return target.CompareTag(Player) || target.CompareTag(RUSoldier) || target.CompareTag(USSoldier);
         }
 
-        [System.Serializable]
-        public class HeadBob
-        {
-            public bool Enabled = true;
-            public float HeadBobWeight = 1f;
-            public Vector2 HeadBobAmount = new Vector2(0.11f, 0.08f);
-            public float HeadBobPeriod = 1f;
-            public AnimationCurve HeadBobCurveX;
-            public AnimationCurve HeadBobCurveY;
-
-            public Vector3 HeadBobPos
-            {
-                get
-                {
-                    return resultHeadbob;
-                }
-            }
-
-            Vector3 resultHeadbob;
-
-            public void CalcHeadbob(float currentTime)
-            {
-                float headBob = Mathf.PingPong(currentTime, HeadBobPeriod) / HeadBobPeriod;
-
-                Vector3 headBobVector = new Vector3();
-
-                headBobVector.x = HeadBobCurveX.Evaluate(headBob) * HeadBobAmount.x;
-                headBobVector.y = HeadBobCurveY.Evaluate(headBob) * HeadBobAmount.y;
-
-                headBobVector = Vector3.LerpUnclamped(Vector3.zero, headBobVector, HeadBobWeight);
-
-                if (!Application.isPlaying)
-                {
-                    headBobVector = Vector2.zero;
-                }
-
-                if (Enabled)
-                {
-                    resultHeadbob = headBobVector;
-                }
-            }
-        }
-
-        [System.Serializable]
-        public class MouseControl
-        {
-            public bool Enabled;
-            public float XSensitivity = 2f;
-            public float YSensitivity = 2f;
-            public float SensivityMultiplier = 1f;
-            public float MinimumX = -90F;
-            public float MaximumX = 90F;
-            public float SmoothTime = 15f;
-            public bool ClampVerticalRotation = true;
-
-            public string AxisXName = "Mouse X";
-            public string AxisYName = "Mouse Y";
-
-            private Quaternion characterTargetRot;
-            private Quaternion cameraTargetRot;
-
-            private Transform character;
-            private Transform camera;
-
-            public void Init(Transform character, Transform camera)
-            {
-                characterTargetRot = character.localRotation;
-                cameraTargetRot = camera.localRotation;
-
-                this.character = character;
-                this.camera = camera;
-            }
-
-            public void LookRotation(float deltaTime)
-            {
-                if (!Enabled)
-                    return;
-
-                LookRotation(Input.GetAxis(AxisXName) * XSensitivity * SensivityMultiplier, Input.GetAxis(AxisYName) * YSensitivity * SensivityMultiplier, deltaTime);
-            }
-
-            public void LookRotation(float yRot, float xRot, float deltaTime)
-            {
-                characterTargetRot *= Quaternion.Euler(0f, yRot, 0f);
-                cameraTargetRot *= Quaternion.Euler(-xRot, 0f, 0f);
-
-                if (ClampVerticalRotation)
-                    cameraTargetRot = ClampRotationAroundXAxis(cameraTargetRot);
-
-                character.localRotation = Quaternion.Slerp(character.localRotation, characterTargetRot, SmoothTime * deltaTime);
-                camera.localRotation = Quaternion.Slerp(camera.localRotation, cameraTargetRot, SmoothTime * deltaTime);
-            }
-
-            public void RotateCameraSmoothlyTo(float xRot, float deltaTime)
-            {
-                cameraTargetRot = Quaternion.Euler(xRot, 0f, 0f);
-
-                if (ClampVerticalRotation)
-                    cameraTargetRot = ClampRotationAroundXAxis(cameraTargetRot);
-
-                camera.localRotation = Quaternion.Slerp(camera.localRotation, cameraTargetRot, SmoothTime * deltaTime);
-            }
-
-            Quaternion ClampRotationAroundXAxis(Quaternion q)
-            {
-                q.x /= q.w;
-                q.y /= q.w;
-                q.z /= q.w;
-                q.w = 1.0f;
-
-                float angleX = 2.0f * Mathf.Rad2Deg * Mathf.Atan(q.x);
-
-                angleX = Mathf.Clamp(angleX, MinimumX, MaximumX);
-
-                q.x = Mathf.Tan(0.5f * Mathf.Deg2Rad * angleX);
-
-                return q;
-            }
-
-        }
     }
 
-    public class PlayerFreezeChangedEvent : UnityEvent<bool>
-    { }
 }

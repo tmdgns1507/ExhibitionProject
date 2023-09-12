@@ -24,7 +24,7 @@ namespace WarGame
         [Header("Others")]
         public LayerMask FireCollisionLayer;
 
-        [HideInInspector] public List<GameObject> detectedTargets;        
+        [HideInInspector] public List<GameObject> detectedTargets;
         Vector3 offset = Vector3.zero;
 
         public SoldierData data;
@@ -102,16 +102,22 @@ namespace WarGame
         private void Awake()
         {
             GetComponents();
-            SetPlayerStates();
+            SetPlayerStates();            
+        }
+
+        private void OnEnable()
+        {                        
+         
         }
 
         void Start()
         {
-            SetNaviAgent(); // default            
+            data.MuzzleFX.SetActive(false);
+            SetNaviAgent(); // default   
         }
 
         void Update()
-        {
+        {   
             ApplyGravity();
             OnRaderSystem();
             soldierSM.OperateUpdate();
@@ -120,6 +126,11 @@ namespace WarGame
         private void FixedUpdate()
         {
             soldierSM.OperateFixedUpdate();
+        }
+
+        private void OnDisable()
+        {
+            health.Health = health.StartHealth;
         }
 
         public void OnRaderSystem()
@@ -147,18 +158,12 @@ namespace WarGame
             raderSystem = GetComponentInChildren<RaderSystem>().gameObject;
         }
 
-        public void SetNaviAgent(float movementSpeed = 2f, bool autoBreaking = false, float angularSpeed = 360f, float stoppingDistance = 1f)
+        public void SetNaviAgent(float movementSpeed = 0.05f, bool autoBreaking = false, float angularSpeed = 360f, float stoppingDistance = 3f)
         {
             agent.angularSpeed = angularSpeed;
             agent.speed = movementSpeed;
             agent.autoBraking = autoBreaking;
-            agent.stoppingDistance = stoppingDistance;
-        }
-
-        public void TakeDamageAnim()
-        {
-            if (!health.Invulnerable && health.IsTakeDamage)
-                animator.SetTrigger("Pain");
+            agent.stoppingDistance = stoppingDistance;            
         }
 
         public bool IsAttackableTarget(GameObject target)
@@ -228,12 +233,20 @@ namespace WarGame
             }
         }
 
+        //void SetDefaultState()
+        //{
+        //    if (soldierSM == null)
+        //    {
+        //        soldierSM = new StateMachine<SoldierController>(this, soldierStates[SoldierState.Idle]);
+        //    }
+        //}
+
         public void ChangeState(SoldierState state)
         {
             soldierSM.SetState(soldierStates[state]);
         }
         #endregion
 
-
+        
     }
 }

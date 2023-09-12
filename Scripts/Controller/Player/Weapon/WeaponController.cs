@@ -28,9 +28,11 @@ namespace WarGame
         [SerializeField] protected string deployedParameter = "Pistol";
         [SerializeField] protected string deployAnim = "Deploy";
         [SerializeField] protected string hideAnim = "Hide";
-
+        [HideInInspector] public string poolsParam = "Pools";
+        [HideInInspector] public string hitEffectPoolParam = "@HitEffect Pool";
         #endregion
 
+        [HideInInspector] public Transform pools;        
         public KeyCode DeployHideKey;
         public UnityEvent DeployedEvent;
         public bool LockControlOnDeploy = true;
@@ -38,6 +40,7 @@ namespace WarGame
         [SerializeField] protected float hideCrossFade = 0.1f;
         protected GameObject handsRoot;
         protected Animator handsAnimator;
+        public GameObject hitEffectPool;
 
         protected bool isDeployed;
         protected bool isCanControl = true;
@@ -77,6 +80,21 @@ namespace WarGame
             hasItem = HandsItem.GetCurrentCount() > 0;
             playerInventory.AddItem(HandsItem);
             HideProps();
+
+            InitHitEffectPool();
+        }
+
+        void InitHitEffectPool()
+        {
+            if (pools == null)
+                pools = GameObject.FindGameObjectWithTag(poolsParam).transform;
+
+            if (hitEffectPool == null)
+            {
+                hitEffectPool = new GameObject();
+                hitEffectPool.name = hitEffectPoolParam;
+                hitEffectPool.transform.SetParent(pools);
+            }
         }
 
         void ChangedItem()

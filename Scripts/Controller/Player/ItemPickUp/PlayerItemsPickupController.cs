@@ -5,16 +5,13 @@ using System.Collections.Generic;
 namespace WarGame
 {
     public class PlayerItemsPickupController : MonoBehaviour
-    {
+    {        
         public LayerMask ItemsLayerMask;
         public float HintsDistance = 5f;
         public float PickupDistance = 2f;
-        [SerializeField]
-        private Transform sphereCheckCenter;
-        [SerializeField]
-        private Camera playerCamera;
-        [SerializeField]
-        private PlayerInventory playerInventory;
+        [SerializeField] private Transform sphereCheckCenter;
+        [SerializeField] private Camera playerCamera;
+        [SerializeField] private PlayerInventory playerInventory;
         public RectTransform ItemUITemplate;
         public AnimationCurve HintAlphaCurve;
 

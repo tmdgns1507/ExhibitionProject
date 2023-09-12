@@ -17,6 +17,7 @@ namespace WarGame
         public TransformTranslater DefaultCameraAnimationTranslater;
         public TransformTranslater DeathCameraAnimationTranslater;
         public TransformStateSetupper CameraStateSetupper;
+        public GameObject EndGameEvent;
 
         DamageEvent damagedEvent = new DamageEvent();
         DamageEvent dieEvent = new DamageEvent();
@@ -58,6 +59,7 @@ namespace WarGame
             Controller.SetNoiseEnabled(false);
             DefaultCameraAnimationTranslater.enabled = false;
             DeathCameraAnimationTranslater.enabled = true;
+            EndGameEvent.SetActive(true);
         }
 
         public void Resurrect()

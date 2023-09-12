@@ -20,7 +20,7 @@ namespace WarGame
         }
 
         public void OperateUpdate(SoldierController controller)
-        {
+        {            
             Destroy(controller);
         }
 
@@ -38,8 +38,8 @@ namespace WarGame
         {
             if (controller.animator.GetCurrentAnimatorStateInfo(0).IsTag("Death") &&
                 controller.animator.GetCurrentAnimatorStateInfo(0).normalizedTime >= 1.0f)
-            {                
-                controller.gameObject.SetActive(false);
+            {
+                PoolManager.Instance.BackToPool(controller.gameObject, controller.data.soldier.GroupName);                
             }
         }
 

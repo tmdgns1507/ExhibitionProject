@@ -10,12 +10,12 @@ namespace WarGame
         #region Variables
         
         [Header("Ammo")]
-        public int AmmoCurrent = 7;
-        public int AmmoMax = 7;
-        public int AmmoMaxDefault = 7;
-        public int AmmoMaxAdd = 9;
+        public int AmmoCurrent = 12;
+        public int AmmoMax = 12;
+        public int AmmoMaxDefault = 12;
+        public int AmmoMaxAdd = 24;
         public int AmmoCapacity { get { return ammoItem.GetCurrentCount(); } }
-        public int BulletsCount = 10;
+        public int BulletsCount = 30;
         public float BulletAngleMin = -2f;
         public float BulletAngleMax = 2f;
         public float DamageAmount = 40f;
@@ -85,6 +85,7 @@ namespace WarGame
         float recoilTime = 0;
         Vector2 currentRecoil = new Vector2();
         TransformStateSetupper propsTransformState;
+        
 
         Vector2 recoilAmountMin = new Vector2(0.3f, 2f);
         Vector2 recoilAmountMax = new Vector2(-0.3f, 3f);
@@ -158,6 +159,7 @@ namespace WarGame
         string DefaultCentralAimShoot = "shotgun aim shot";
         string SilenceCentralAimShoot = "shotgun aim silencer shot";
 
+        string shotgunHitEffectPoolParam = "@Shotgun HitEffect Pool";
         #endregion
 
         public float CurrentAimFov { get { return isCentralAim ? aimFovCentral : aimFov; } }
@@ -226,7 +228,11 @@ namespace WarGame
             ammoItem = new ShotgunAmmoItem("Item_Shotgun_Ammo");
             playerInventory.AddItem(ammoItem);
             controller.PlayerFreezeChanged.AddListener(FreezeChanged);
+
+            hitEffectPool.name = shotgunHitEffectPoolParam;
         }
+
+        
 
         void InitShotgunParams()
         {
@@ -378,6 +384,7 @@ namespace WarGame
             for (int i = 0; i < poolSize; i++)
             {
                 GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
@@ -389,6 +396,7 @@ namespace WarGame
             if (gunHitDecalPool.Count == 0)
             {
                 GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
@@ -739,7 +747,7 @@ namespace WarGame
 
                     if (dOnHit == null && !controller.IsHumanoidTarget(hitInfo.collider.gameObject))
                     {
-                        GameObject decal = SpawnHitDecal();
+                        GameObject decal = SpawnHitDecal();                        
                         decal.SetActive(true);
                         decal.GetComponent<TimedCallbackEvent>().DestroyWithDelay(hitDecalLifetime, () => DecalDestroyed(decal));
                         decal.transform.position = hitInfo.point;
@@ -1051,7 +1059,7 @@ namespace WarGame
     {
         public ShotgunAmmoItem(string itemName) : base(itemName)
         {
-            MaxCapacity = 32;
+            MaxCapacity = 120;
             IconName = "ShotgunAmmo";
         }
     }

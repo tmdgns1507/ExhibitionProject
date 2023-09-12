@@ -7,8 +7,14 @@ namespace WarGame
 {
     public class SoldierData : MonoBehaviour
     {
+        [Header("Pool Data")]
+        public DataForPool soldier = default;
+        public DataForPool bloodFX = default;
+
         [Header("Stats")]
         public GameObject handsObject;
+        public GameObject MuzzleFX;
+        public GameObject GunSound;
         public float damageAmount = 20f;
         public float speed = 0.25f;
         public float runSpeed = 0.4f;
@@ -18,8 +24,7 @@ namespace WarGame
         public float viewAngle = 110f;
         public float sightDistance = 2000f;
         public float gravity = 9.81f;
-
-
+                
         [HideInInspector] public string Player = "Player";
         [HideInInspector] public string USSoldier = "USSoldier";
         [HideInInspector] public string RUSoldier = "RUSoldier";
@@ -28,6 +33,7 @@ namespace WarGame
         [HideInInspector] public string RULayer = "RULayer"; 
         [HideInInspector] public string RU_Destinations = "RU_Destinations";
         [HideInInspector] public string US_Destinations = "US_Destinations";
+        [HideInInspector] public string targetPoint = "TargetPoint";
         bool isRuSoldier = false;
         bool isUsSoldier = false;
 
@@ -39,7 +45,7 @@ namespace WarGame
 
         private void Awake()
         {
-            IdentificationOfPeer();
+            IdentificationOfPeer();            
             retreatDistance = sightDistance + (sightDistance / 3);
         }
 
@@ -55,8 +61,6 @@ namespace WarGame
             retreatDistance = sightDistance + (sightDistance / 3);
             UpdateTargetsDistance();
         }
-
-
 
         void UpdateTargetsDistance()
         {

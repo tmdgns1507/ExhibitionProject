@@ -108,11 +108,11 @@ namespace WarGame
             }
         }
     }
+}
 
-    public interface IPlayerAction
-    {
-        void UseStart();
-        void UseUpdate();
-        void UseEnd();
-    }
+public interface IPlayerAction
+{
+    void UseStart();
+    void UseUpdate();
+    void UseEnd();
 }

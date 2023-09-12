@@ -13,16 +13,16 @@ namespace WarGame
         {
             controller.isForcedRaderShutDown = true;
             controller.agent.isStopped = true;
-            
-            currDestination = controller.destination;   // Init currDest
-            SetNextDestination(controller);
 
+            currDestination = controller.destination;   // Init currDest
+
+            SetNextDestination(controller);
             controller.ChangeState(SoldierController.SoldierState.Move);
         }
 
         public void OperateUpdate(SoldierController controller)
         {
-            controller.TakeDamageAnim();
+
         }
 
         public void OperateFixedUpdate(SoldierController controller)

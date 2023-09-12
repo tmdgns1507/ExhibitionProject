@@ -8,8 +8,8 @@ namespace WarGame
     public class SoldierIdle : IState<SoldierController>
     {
         float time;
-        float minTime = 10f;
-        float maxTime = 20f;
+        float minTime = 1f;
+        float maxTime = 3f;
         float startTime;
 
         public void OperateEnter(SoldierController controller)
@@ -23,10 +23,8 @@ namespace WarGame
         }
 
         public void OperateUpdate(SoldierController controller)
-        {            
+        {   
             time += Time.deltaTime;
-
-            controller.TakeDamageAnim();
 
             if (!controller.health.IsAlive)
                 controller.ChangeState(SoldierController.SoldierState.Dead);
@@ -54,20 +52,20 @@ namespace WarGame
         }
 
         void InitDestinations(SoldierController controller)
-        {            
-            GameObject parent = null;            
+        {
+            GameObject rootDestinations = null;
 
             if (controller.data.IsRuSoldier)
-                parent = GameObject.FindGameObjectWithTag(controller.data.RU_Destinations);
+                rootDestinations = GameObject.FindGameObjectWithTag(controller.data.RU_Destinations);
             else
-                parent = GameObject.FindGameObjectWithTag(controller.data.US_Destinations);
+                rootDestinations = GameObject.FindGameObjectWithTag(controller.data.US_Destinations);
 
-            if(controller.destinations.Count != 0) 
+            if (controller.destinations.Count != 0) 
                 controller.destinations = new List<Transform>();
 
-            for(int i =0; i<parent.transform.childCount; i++)
+            for (int i =0; i<rootDestinations.transform.childCount; i++)
             {
-                controller.destinations.Add(parent.transform.GetChild(i));
+                controller.destinations.Add(rootDestinations.transform.GetChild(i));
             }            
         }
 

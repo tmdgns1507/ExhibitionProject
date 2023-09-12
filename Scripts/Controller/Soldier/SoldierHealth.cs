@@ -4,7 +4,9 @@ using UnityEngine;
 namespace WarGame
 {
     public class SoldierHealth : BaseHittableObject
-    {        
+    {
+        SoldierData data;
+        Animator animator;
         public float PlayerGrenadeDamageMul = 2f;
         bool isTakeDamage = false;
 
@@ -13,7 +15,9 @@ namespace WarGame
         public bool IsTakeDamage { get { return IsAlive && isTakeDamage; } }
 
         private void Awake()
-        {   
+        {
+            animator = GetComponent<Animator>();
+            data = GetComponent<SoldierData>();
             StartHealth = Health;
         }
 
@@ -34,9 +38,27 @@ namespace WarGame
             if (damage.Deadly)
                 Health = 0;
 
+            if (IsAlive)
+            {
+                animator.SetTrigger("Pain");
+                BloodEffect();
+            }
+
             isTakeDamage = false;
         }
 
-       
+        void BloodEffect()
+        {            
+            Vector3 damagePos = this.transform.position;
+            for (int i = 0; i < this.transform.childCount; i++)
+            {
+                if (this.transform.GetChild(i).CompareTag(data.targetPoint))
+                {
+                    damagePos = this.transform.GetChild(i).transform.position;
+                    break;
+                }
+            }
+            PoolManager.Instance.SpawnObject(data.bloodFX.Prefab, data.bloodFX.GroupName, true, damagePos);            
+        }
     }
 }

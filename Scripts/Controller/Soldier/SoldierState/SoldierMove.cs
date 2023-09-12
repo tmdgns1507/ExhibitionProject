@@ -19,9 +19,8 @@ namespace WarGame
         }
 
         public void OperateUpdate(SoldierController controller)
-        {
+        {            
             DetectTarget(controller);
-            controller.TakeDamageAnim();
             ChangeState(controller);
         }
 

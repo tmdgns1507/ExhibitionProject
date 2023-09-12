@@ -11,25 +11,28 @@ namespace WarGame
         float nextFireTime = 0f;
 
         public void OperateEnter(SoldierController controller)
-        {
+        {            
             controller.agent.isStopped = true;
             controller.animator.SetBool("Idling", true);
         }
 
         public void OperateUpdate(SoldierController controller)
         {
+            controller.agent.destination = controller.transform.position;
+
             DetectTarget(controller);
             ChangeState(controller);
-            controller.TakeDamageAnim();
 
             nextFireTime += Time.deltaTime;
             if (nearestTarget != null)
             {
                 controller.transform.LookAt(nearestTarget.transform);
                 if (nextFireTime >= controller.data.autoFireRate)
-                {
+                {                    
+                    controller.StartCoroutine(MuzzleEffect(controller));
+                    controller.data.GunSound.GetComponent<AudioSource>().Play();
                     Fire(controller, nearestTarget);
-                }
+                }                
             }
         }
 
@@ -84,8 +87,20 @@ namespace WarGame
         {
             GameObject hands = controller.data.handsObject;
             Vector3 rayDirection = controller.transform.forward;
-            if (nearestTarget != null) rayDirection = (nearestTarget.transform.position - hands.transform.position).normalized;
+            if (nearestTarget != null)
+            {
+                rayDirection = (nearestTarget.transform.position - hands.transform.position).normalized;
 
+                for(int i =0; i<nearestTarget.transform.childCount; i++)
+                {
+                    if(nearestTarget.transform.GetChild(i).CompareTag(controller.data.targetPoint))
+                    {
+                        rayDirection = (nearestTarget.transform.GetChild(i).transform.position - hands.transform.position).normalized;
+                        break;
+                    }
+                }
+            }
+            
             Ray r = new Ray(hands.transform.position, rayDirection);
             RaycastHit hitInfo;
 
@@ -106,7 +121,19 @@ namespace WarGame
                     damage.HitPosition = hitInfo.point;
                     hittable.TakeDamage(damage);
                 }
+                                
             }
+        }
+
+        IEnumerator MuzzleEffect(SoldierController controller)
+        {
+            controller.data.MuzzleFX.SetActive(true);
+            controller.data.MuzzleFX.GetComponent<ParticleSystem>().Play();
+            
+            yield return new WaitForSeconds(0.25f);
+            
+            controller.data.MuzzleFX.GetComponent<ParticleSystem>().Stop();
+            controller.data.MuzzleFX.SetActive(false);
         }
     }
 }

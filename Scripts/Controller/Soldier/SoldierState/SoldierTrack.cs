@@ -24,7 +24,6 @@ namespace WarGame
             
             if(nearestTarget != null) controller.agent.SetDestination(nearestTarget.transform.position);
 
-            controller.TakeDamageAnim();
             ChangeState(controller);
         }
 

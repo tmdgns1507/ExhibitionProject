@@ -71,6 +71,8 @@ namespace WarGame
                 propsTransformState.CalculateVelocity = true;
             }
             ammoItem = HandsItem as GrenadeItem;
+
+            if (hitEffectPool != null) GameObject.Destroy(hitEffectPool);
         }
 
         void InitGrenadeParams()

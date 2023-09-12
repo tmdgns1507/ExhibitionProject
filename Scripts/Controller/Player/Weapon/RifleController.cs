@@ -62,6 +62,8 @@ namespace WarGame
         public string EmptyParam = "Empty";
         public string PoseParam = "RiflePose";
 
+        string rifleHitEffectPoolParam = "@Rifle HitEffect Pool";
+
         #endregion
 
         #region Variables
@@ -168,8 +170,8 @@ namespace WarGame
         public float ShellRandomAngleMin = -5;
         public float ShellRandomAngleMax = 5;
         public Transform ShellTorqueDir;
-        public float ShellTorque = -1200f;
-
+        public float ShellTorque = -1200f;        
+        
         float cameraFov = 60f;
         public GameObject propsRoot;
         public GameObject propsRootFirstDeploy;
@@ -292,6 +294,9 @@ namespace WarGame
             ammoItem = new RifleAmmoItem("Item_Rifle_Ammo");
             playerInventory.AddItem(ammoItem);
             Controller.PlayerFreezeChanged.AddListener(FreezeChanged);
+
+            hitEffectPool.name = rifleHitEffectPoolParam;
+            
         }
 
         void InitRifleParams()
@@ -479,7 +484,8 @@ namespace WarGame
         {
             for (int i = 0; i < poolSize; i++)
             {
-                GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);                
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
@@ -491,6 +497,7 @@ namespace WarGame
             if (gunHitDecalPool.Count == 0)
             {
                 GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
@@ -1125,8 +1132,8 @@ namespace WarGame
         }
 
         void DecalDestroyed(GameObject decal)
-        {
-            decal.transform.SetParent(null);
+        {            
+            decal.transform.SetParent(hitEffectPool.transform);
             decal.SetActive(false);
             gunHitDecalPool.Enqueue(decal);
         }
@@ -1410,7 +1417,7 @@ namespace WarGame
     {
         public RifleAmmoItem(string itemName) : base(itemName)
         {
-            MaxCapacity = 240;
+            MaxCapacity = 600;
             IconName = "RifleAmmo";
         }
     }

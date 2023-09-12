@@ -149,6 +149,7 @@ namespace WarGame
 
         public string EmptyParam = "Empty";
 
+        string pistolHitEffectPoolParam = "@Pistol HitEffect Pool";
         #endregion
 
         public float CameraFov { get { return cameraFov; } }
@@ -215,6 +216,8 @@ namespace WarGame
             playerInventory.AddItem(new PistolAmmoItem("Item_Pistol_Ammo"));
             ammoItem = playerInventory.GetItem<PistolAmmoItem>();
             controller.PlayerFreezeChanged.AddListener(FreezeChanged);
+
+            hitEffectPool.name = pistolHitEffectPoolParam;
         }
 
         void InitPistolParams()
@@ -378,11 +381,11 @@ namespace WarGame
             for (int i = 0; i < poolSize; i++)
             {
                 GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
             }
-            //PoolManager.Instance.PoolInstaller(HitEffect.Prefab, 100, "HitEffects");
         }
 
         public virtual GameObject SpawnHitDecal()
@@ -390,23 +393,13 @@ namespace WarGame
             if (gunHitDecalPool.Count == 0)
             {
                 GameObject instance = GameObject.Instantiate(GunHitDecalPrefab);
+                instance.transform.SetParent(hitEffectPool.transform);
                 instance.SetActive(false);
 
                 gunHitDecalPool.Enqueue(instance);
             }
 
             return gunHitDecalPool.Dequeue();
-            //GameObject hitEffect = HitEffect.Prefab;
-            //if(PoolManager.AllPools.ContainsKey("HitEffects"))
-            //{
-            //    hitEffect = PoolManager.AllPools["HitEffects"].GetFromPool();                
-            //}
-            //else
-            //{
-            //    PoolManager.Instance.PoolInstaller(HitEffect.Prefab, 1, "HitEffects");
-            //}
-
-            //return hitEffect;
         }
 
         public void SetCameraFov(float fov)
